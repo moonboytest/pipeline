@@ -29,6 +29,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -122,6 +123,7 @@ type Pipeline struct {
 
 // Новый экземпляр пайплайна
 func NewPipeline(done <-chan bool, stages ...stageInt) *Pipeline {
+	log.Print("Создан новый эклемпляр пайплайна")
 	return &Pipeline{stages: stages, done: done}
 }
 
@@ -132,6 +134,7 @@ func (p *Pipeline) Start(source <-chan int) <-chan int {
 	for index := range p.stages {
 		c = p.RunStage(p.stages[index], c)
 	}
+	log.Print("Пайплайн запущен")
 	return c
 }
 
@@ -142,6 +145,7 @@ func (p *Pipeline) Start(source <-chan int) <-chan int {
 func Input() (<-chan int, <-chan bool) {
 	c := make(chan int)
 	done := make(chan bool)
+	log.Print("Ожидается ввод чисел")
 
 	go func() {
 		defer close(done)
@@ -154,11 +158,13 @@ func Input() (<-chan int, <-chan bool) {
 			data = scanner.Text()
 			if strings.EqualFold(data, "exit") {
 				fmt.Println("Выходим из программы")
+				log.Print("Программа завершена")
 				return
 			}
 			i, err := strconv.Atoi(data)
 			if err != nil {
 				fmt.Println("Программа обрабатывает только целые числа")
+				log.Print("Ошибка, обрабатываются только целые числа")
 				continue
 			}
 			c <- i
@@ -174,6 +180,7 @@ func Input() (<-chan int, <-chan bool) {
 // Фильтрация отрицательных чисел
 func negativeFilter(done <-chan bool, c <-chan int) <-chan int {
 	convertedIntChan := make(chan int)
+	log.Print("Филтрация отрицательных чисел")
 	go func() {
 		for {
 			select {
@@ -196,6 +203,7 @@ func negativeFilter(done <-chan bool, c <-chan int) <-chan int {
 // Фильтрация чисел не кратных трем
 func specialFilter(done <-chan bool, c <-chan int) <-chan int {
 	convertedIntChan := make(chan int)
+	log.Print("Филтрация чисел не кратных трем")
 	go func() {
 		for {
 			select {
@@ -222,6 +230,8 @@ func specialFilter(done <-chan bool, c <-chan int) <-chan int {
 func bufferStageInt(done <-chan bool, c <-chan int) <-chan int {
 	bufferIntChan := make(chan int)
 	buffer := NewBuffer(bufferSize)
+
+	log.Print("Стадия буферизации данных")
 
 	go func() {
 		for {
